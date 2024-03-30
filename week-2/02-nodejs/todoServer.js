@@ -46,27 +46,42 @@ const bodyParser = require("body-parser");
 const app = express();
 
 app.use(bodyParser.json());
+
+//Initialising empty todo
 let todos = [];
 
+// Retrieve all todos
 app.get("/todos", function (req, res) {
   res.json(todos);
 });
 
-app.get("/todos/:id", function (req, res) {});
+// Retrieve a todo by id
+app.get("/todos/:id", function (req, res) {
+  const id = parseInt(req.params.id);
+  const todo = todos.find((t) => t.id === id);
+  if (!todo) {
+    return res.status(404).json({
+      error: "Todo by id not found",
+    });
+  }
+  res.json(todo);
+});
 
+// Create new todo
 app.post("/todos", function (req, res) {
   const todo = {
-    id: todos.length + 1,
+    id: Math.floor(Math.random() * 1000),
     title: req.body.title,
-    completed: req.body.completed || false,
+    description: req.body.description,
   };
   todos.push(todo);
   res.status(201).json(todo);
 });
 
-app.put("todos/:id", function (req, res) {
+// Update a todo
+app.put("/todos/:id", function (req, res) {
   const id = parseInt(req.params.id);
-  const todo = todos.find((t) => t.id === t);
+  const todo = todos.find((t) => t.id === id);
   if (!todo) {
     return res.status(404).json({
       error: "Todo not Found",
@@ -77,6 +92,7 @@ app.put("todos/:id", function (req, res) {
   res.json(todo);
 });
 
+// Delete a todo
 app.delete("/todos/:id", function (req, res) {
   const id = parseInt(req.params.id);
   const index = todos.findIndex((t) => t.id === id);
@@ -89,6 +105,13 @@ app.delete("/todos/:id", function (req, res) {
   res.status(204).send();
 });
 
-app.listen(3000);
+// for other endpoints
+app.use((req, res, next) => {
+  res.status(404).json({
+    error: "api not found",
+  });
+});
+
+app.listen(3001);
 
 module.exports = app;
