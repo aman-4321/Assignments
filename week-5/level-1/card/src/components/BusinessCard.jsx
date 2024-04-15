@@ -1,7 +1,7 @@
 export default function BusinessCard() {
   return (
     <div className="h-screen w-screen font-sans pl-2 pt-4">
-      <div className=" w-1/3 h-1/2 border-gray-200 border-2 rounded-xl">
+      <div className=" w-1/4 h-96 border-gray-200 border-2 rounded-xl">
         <div className="">
           <p className="pl-6 pt-2 font-medium text-5xl">Lokeshwar</p>
         </div>
@@ -11,7 +11,7 @@ export default function BusinessCard() {
           </p>
         </div>
         <div className="pl-6 pb-5">
-          <p className="font-bold pb-3">Interests</p>
+          <p className="font-bold pb-3 text-xl">Interests</p>
           <p>Ionic</p>
           <p>Open Source</p>
           <p>App dev</p>
