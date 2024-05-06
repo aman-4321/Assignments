@@ -1,19 +1,16 @@
 import { PrismaClient } from "@prisma/client/edge";
-import { withAccelerate } from "@prisma/extension-accelerate";
+import { Context } from "hono";
 import { signinSchema, signupSchema } from "../zod/user";
 import { Jwt } from "hono/utils/jwt";
-import { Context } from "hono";
 
 enum StatusCode {
   BADREQ = 400,
   NOTFOUND = 404,
-  NOTPERMISSIOON = 403,
+  NOPERMISSION = 403,
 }
 
 export async function signup(c: Context) {
-  const prisma = new PrismaClient({
-    datasourceUrl: c.env.DATABASE_URL,
-  }).$extends(withAccelerate());
+  const prisma = new PrismaClient();
 
   try {
     const body: {
@@ -25,15 +22,15 @@ export async function signup(c: Context) {
     const parsedUser = signupSchema.safeParse(body);
 
     if (!parsedUser.success) {
-      return c.body("Invalid user input", StatusCode.BADREQ);
+      return c.body("Invalid user Input", StatusCode.BADREQ);
     }
 
-    const isUserExist = await prisma.user.findFirst({
+    const UserExist = await prisma.user.findFirst({
       where: { email: body.email },
     });
 
-    if (isUserExist) {
-      return c.body("email already exist", StatusCode.BADREQ);
+    if (UserExist) {
+      return c.body("email already exists", StatusCode.BADREQ);
     }
 
     const res = await prisma.user.create({
@@ -49,7 +46,7 @@ export async function signup(c: Context) {
     const token = await Jwt.sign(userId, c.env.JWT_TOKEN);
 
     return c.json({
-      msg: "User created successfully",
+      msg: "user created successfully",
       token: token,
       user: {
         userId: res.id,
@@ -58,15 +55,12 @@ export async function signup(c: Context) {
       },
     });
   } catch (error) {
-    return c.body(`Internal server error: ${error}`, 500);
+    return c.body(`Server Error: ${error}" , 500`);
   }
 }
 
 export async function signin(c: Context) {
-  const prisma = new PrismaClient({
-    datasourceUrl: c.env.DATABASE_URL,
-  }).$extends(withAccelerate());
-
+  const prisma = new PrismaClient();
   try {
     const body: {
       email: string;
@@ -87,7 +81,7 @@ export async function signin(c: Context) {
     });
 
     if (isUserExist == null) {
-      return c.body("User does not exists", StatusCode.BADREQ);
+      return c.body("User does not Exist", StatusCode.BADREQ);
     }
 
     const userId = isUserExist.id;
@@ -95,7 +89,7 @@ export async function signin(c: Context) {
     const token = await Jwt.sign(userId, c.env.JWT_TOKEN);
 
     return c.json({
-      message: "login successfully",
+      msg: "Login successful",
       token: token,
       user: {
         userId: userId,
@@ -104,14 +98,12 @@ export async function signin(c: Context) {
       },
     });
   } catch (error) {
-    return c.body(`Internal server error: ${error}`, 500);
+    return c.body(`Server Error: ${error}" , 500`);
   }
 }
 
 export async function userProfile(c: Context) {
-  const prisma = new PrismaClient({
-    datasourceUrl: c.env.DATABASE_URL,
-  }).$extends(withAccelerate());
+  const prisma = new PrismaClient();
 
   try {
     const res = await prisma.user.findFirst({
@@ -124,7 +116,7 @@ export async function userProfile(c: Context) {
     });
 
     if (res == null) {
-      return c.body("User not found", 404);
+      return c.body("user not found", 404);
     } else {
       return c.json({
         user: {
@@ -141,9 +133,7 @@ export async function userProfile(c: Context) {
 }
 
 export const getAllUsers = async (c: Context) => {
-  const prisma = new PrismaClient({
-    datasourceUrl: c.env.DATABASE_URL,
-  }).$extends(withAccelerate());
+  const prisma = new PrismaClient();
 
   try {
     const res = await prisma.user.findMany();
