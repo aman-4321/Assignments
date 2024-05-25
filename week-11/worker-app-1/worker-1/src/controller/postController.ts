@@ -62,5 +62,133 @@ export async function createPost(c: Context) {
     } = await c.req.json();
 
     const tagNames = body.tags.split(",").map((tag) => tag.trim());
-  } catch (error) {}
+    if ((body.title && body.body) === null) {
+      return c.body("Invalid user input", StatusCode.BADREQ);
+    }
+
+    const res = await prisma.posts.create({
+      data: {
+        title: body.title,
+        body: body.body,
+        userId: c.get("userId"),
+        tags: {
+          connectOrCreate: tagNames.map((tag) => ({
+            where: { tag },
+            create: { tag },
+          })),
+        },
+      },
+      include: {
+        tags: true,
+      },
+    });
+
+    return c.json({
+      message: "Posted Successfully",
+      post: {
+        id: res.id,
+        title: res.title,
+        body: res.body,
+        tags: res.tags.map((tag) => tag.tag),
+        createdAt: res.createdAt,
+      },
+    });
+  } catch (error) {
+    return c.body(`Internal server error: ${error}`, 500);
+  }
 }
+
+export async function getPost(c: Context) {
+  const prisma = new PrismaClient();
+
+  try {
+    const id: number = Number(c.req.param("id"));
+
+    const isPostExist = await prisma.posts.findFirst({
+      where: {
+        id: id,
+        userId: c.get("userId"),
+      },
+      include: {
+        tags: true,
+      },
+    });
+
+    if (isPostExist == null) {
+      return c.body("Post does not exists", StatusCode.NOTFOUND);
+    }
+
+    return c.json({
+      data: {
+        id: isPostExist.id,
+        title: isPostExist.title,
+        body: isPostExist.body,
+        tags: isPostExist.tags,
+        createdAt: isPostExist.createdAt,
+      },
+    });
+  } catch {
+    return c.body(`Internal server error: ${error}`, 500);
+  }
+}
+
+export async function updatePost(c: Context) {
+  const prisma = new PrismaClient();
+
+  try {
+    const id: number = Number(c.req.param("id"));
+
+    const body: {
+      title: string;
+      body: string;
+      tags: string;
+    } = await c.req.json();
+
+    const tagNames = body.tags.split(",").map((tag) => tag.trim());
+
+    const isPostExist = await prisma.posts.findFirst({
+      where: {
+        id: id,
+        userId: c.get("userId"),
+      },
+    });
+
+    if (isPostExist == null) {
+      return c.body("Post does not exists", StatusCode.NOTFOUND);
+    }
+
+    const res = await prisma.posts.update({
+      where: {
+        id: id,
+        userId: c.get("userId"),
+      },
+      data: {
+        title: body.title,
+        body: body.body,
+        tags: {
+          connectOrCreate: tagNames.map((tag) => ({
+            where: { tag },
+            create: { tag },
+          })),
+        },
+      },
+      include: {
+        tags: true,
+      },
+    });
+
+    return c.json({
+      data: {
+        id: res.id,
+        title: res.title,
+        body: res.body,
+        tags: res.tags,
+        createdAt: res.createdAt,
+      },
+    });
+  } catch (error) {
+    return c.body(`Internal server error: ${error}`, 500);
+  }
+}
+
+export
