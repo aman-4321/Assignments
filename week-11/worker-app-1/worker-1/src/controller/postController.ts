@@ -191,4 +191,34 @@ export async function updatePost(c: Context) {
   }
 }
 
-export
+export async function deletePost(c: Context) {
+  const prisma = new PrismaClient();
+
+  try {
+    const id: number = Number(c.req.param("id"));
+
+    const isPostExist = await prisma.posts.findFirst({
+where: {
+        id: id,
+        userId; c.get("userId"),
+      }
+    })
+
+    if(isPostExist == null) {
+      return c.body("Post does not exist", StatusCode.NOTFOUND)
+}
+
+    const res = await prisma.posts.delete({
+      where: {
+        id: id,
+        userId: c.get("userId")
+      }
+    })
+    return c.json({
+      message: "Post Deleted"
+    })
+
+  } catch (error) {
+    return c.json({msg: `Internal server error: ${error} `}, 500)
+  }
+}
